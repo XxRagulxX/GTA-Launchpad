@@ -1,7 +1,5 @@
 name: Release
 
-# Manual only - trigger from the Actions tab or:
-#   gh workflow run release.yml -f version=v1.2.3
 on:
   workflow_dispatch:
     inputs:
@@ -29,22 +27,12 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Publish (.NET 10 win-x64 self-contained)
-        # Force net10.0-windows so the csproj OS condition is bypassed on the
-        # Windows runner (which would otherwise select net472).
-        run: >
-          dotnet publish Launchpad/Launchpad.csproj
-          -c Release
-          -r win-x64
-          --self-contained true
-          /p:TargetFramework=net10.0-windows
-          /p:PublishSingleFile=true
-          /p:EnableWindowsTargeting=true
-          -o build/publish
+      - name: Publish (.NET 4.7.2)
+        run: dotnet publish Launchpad/Launchpad.csproj -c Release -o build/publish
 
       - name: Package
-        run: Compress-Archive -Path build/publish/Launchpad.exe -DestinationPath "Launchpad-${{ inputs.version }}-win-x64.zip"
         shell: pwsh
+        run: Compress-Archive -Path build/publish/Launchpad.exe -DestinationPath "Launchpad-${{ inputs.version }}-win-x64.zip"
 
       - uses: actions/upload-artifact@v4
         with:
