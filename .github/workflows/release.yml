@@ -19,7 +19,32 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  # ── Linux build: .NET 10, win-x64 self-contained single file (~50 MB) ─────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish (Linux → .NET 10 win-x64 self-contained)
+        run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 --self-contained true -o build/publish
+
+      - name: Package
+        run: |
+          cd build/publish
+          zip -j "../../Launchpad-${{ inputs.version }}-win-x64-net10.zip" Launchpad.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launchpad-net10-win-x64
+          path: Launchpad-${{ inputs.version }}-win-x64-net10.zip
+          if-no-files-found: error
+
+  # ── Windows build: .NET Framework 4.7.2, small exe (~1-2 MB) ─────────────
+  build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,21 +53,22 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Publish
-        run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 --self-contained true -o build/publish
+      - name: Publish (Windows → .NET 4.7.2)
+        run: dotnet publish Launchpad/Launchpad.csproj -c Release -o build/publish
 
       - name: Package
-        run: Compress-Archive -Path build/publish/* -DestinationPath "Launchpad-${{ inputs.version }}-win-x64.zip"
+        run: Compress-Archive -Path build/publish/Launchpad.exe -DestinationPath "Launchpad-${{ inputs.version }}-win-x64-net472.zip"
         shell: pwsh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: launchpad-win-x64
-          path: Launchpad-${{ inputs.version }}-win-x64.zip
+          name: launchpad-net472-win-x64
+          path: Launchpad-${{ inputs.version }}-win-x64-net472.zip
           if-no-files-found: error
 
+  # ── Create GitHub release with both artifacts ─────────────────────────────
   release:
-    needs: build
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -57,4 +83,10 @@ jobs:
           name: ${{ inputs.version }}
           prerelease: ${{ inputs.prerelease }}
           generate_release_notes: true
+          body: |
+            ## Downloads
+            | File | Framework | Size |
+            |------|-----------|------|
+            | `Launchpad-${{ inputs.version }}-win-x64-net10.zip` | .NET 10 (self-contained, no install needed) | ~50 MB |
+            | `Launchpad-${{ inputs.version }}-win-x64-net472.zip` | .NET Framework 4.7.2 (requires Win 10/11) | ~2 MB |
           files: artifacts/*
