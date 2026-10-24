@@ -59,6 +59,61 @@ internal static class NativeMethods
         uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags,
         IntPtr lpThreadId);
 
+    // Lower-level thread creation — hidden from user-mode debuggers/monitors
+    // flags: 0x4 = THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER
+    [DllImport("ntdll.dll")]
+    public static extern int NtCreateThreadEx(
+        out IntPtr hThread,
+        uint        desiredAccess,
+        IntPtr      objectAttributes,
+        IntPtr      processHandle,
+        IntPtr      startAddress,
+        IntPtr      parameter,
+        uint        createFlags,
+        UIntPtr     zeroBits,
+        UIntPtr     stackSize,
+        UIntPtr     maximumStackSize,
+        IntPtr      attributeList);
+
+    public const uint THREAD_ALL_ACCESS              = 0x1FFFFF;
+    public const uint THREAD_CREATE_FLAGS_HIDE       = 0x4;
+    public const uint TH32CS_SNAPTHREAD              = 0x00000004;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct THREADENTRY32
+    {
+        public uint dwSize;
+        public uint cntUsage;
+        public uint th32ThreadID;
+        public uint th32OwnerProcessID;
+        public int  tpBasePri;
+        public int  tpDeltaPri;
+        public uint dwFlags;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool Thread32First(IntPtr hSnapshot, ref THREADENTRY32 lpte);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool Thread32Next(IntPtr hSnapshot, ref THREADENTRY32 lpte);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr OpenThread(uint dwDesiredAccess, bool bInheritHandle, uint dwThreadId);
+
+    public const uint THREAD_SUSPEND_RESUME = 0x0002;
+    public const uint THREAD_GET_CONTEXT    = 0x0008;
+    public const uint THREAD_SET_CONTEXT    = 0x0010;
+    public const uint THREAD_QUERY_INFO     = 0x0040;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint SuspendThread(IntPtr hThread);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint ResumeThread(IntPtr hThread);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
 

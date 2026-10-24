@@ -108,18 +108,18 @@ internal static class DllInjector
                 }
                 CrashLog.Write("  InjectAll: WriteProcessMemory OK");
 
-                CrashLog.Write("  InjectAll: CreateRemoteThread");
-                var thread = NativeMethods.CreateRemoteThread(
-                    handle, IntPtr.Zero, 0, loadLibraryW, remoteAddr, 0, IntPtr.Zero);
-                CrashLog.Write($"  InjectAll: CreateRemoteThread returned 0x{thread:X}");
+                IntPtr thread = StartRemoteThread(handle, loadLibraryW, remoteAddr);
+                CrashLog.Write($"  InjectAll: StartRemoteThread returned 0x{thread:X}");
 
                 if (thread == IntPtr.Zero)
                 {
                     int err = Marshal.GetLastWin32Error();
-                    log($"CreateRemoteThread failed for {Path.GetFileName(dll)} (error {err}).");
+                    log($"Could not start remote thread for {Path.GetFileName(dll)} (error {err}).");
                     continue;
                 }
 
+                // Wait up to 10 s for LoadLibrary to finish, then release the handle.
+                NativeMethods.WaitForSingleObject(thread, 10_000);
                 NativeMethods.CloseHandle(thread);
                 log($"Injected: {Path.GetFileName(dll)}");
                 injected++;
@@ -131,6 +131,52 @@ internal static class DllInjector
         }
 
         return injected;
+    }
+
+    /// <summary>
+    /// Tries three methods in order (least-detectable first):
+    /// 1. NtCreateThreadEx with HIDE_FROM_DEBUGGER flag
+    /// 2. NtCreateThreadEx without the flag
+    /// 3. CreateRemoteThread (last resort)
+    /// Returns the thread handle, or IntPtr.Zero on total failure.
+    /// </summary>
+    private static IntPtr StartRemoteThread(IntPtr hProcess, IntPtr startAddr, IntPtr param)
+    {
+        // Method 1: NtCreateThreadEx hidden
+        CrashLog.Write("  StartRemoteThread: trying NtCreateThreadEx (hidden)");
+        int status = NativeMethods.NtCreateThreadEx(
+            out IntPtr t1,
+            NativeMethods.THREAD_ALL_ACCESS,
+            IntPtr.Zero,
+            hProcess,
+            startAddr,
+            param,
+            NativeMethods.THREAD_CREATE_FLAGS_HIDE,
+            UIntPtr.Zero, UIntPtr.Zero, UIntPtr.Zero,
+            IntPtr.Zero);
+        CrashLog.Write($"  StartRemoteThread: NtCreateThreadEx(hidden) status=0x{status:X} handle=0x{t1:X}");
+        if (status == 0 && t1 != IntPtr.Zero) return t1;
+
+        // Method 2: NtCreateThreadEx visible
+        CrashLog.Write("  StartRemoteThread: trying NtCreateThreadEx (visible)");
+        status = NativeMethods.NtCreateThreadEx(
+            out IntPtr t2,
+            NativeMethods.THREAD_ALL_ACCESS,
+            IntPtr.Zero,
+            hProcess,
+            startAddr,
+            param,
+            0,
+            UIntPtr.Zero, UIntPtr.Zero, UIntPtr.Zero,
+            IntPtr.Zero);
+        CrashLog.Write($"  StartRemoteThread: NtCreateThreadEx(visible) status=0x{status:X} handle=0x{t2:X}");
+        if (status == 0 && t2 != IntPtr.Zero) return t2;
+
+        // Method 3: classic CreateRemoteThread
+        CrashLog.Write("  StartRemoteThread: trying CreateRemoteThread");
+        IntPtr t3 = NativeMethods.CreateRemoteThread(hProcess, IntPtr.Zero, 0, startAddr, param, 0, IntPtr.Zero);
+        CrashLog.Write($"  StartRemoteThread: CreateRemoteThread returned 0x{t3:X}");
+        return t3;
     }
 
     private static readonly Random Rng = new();
