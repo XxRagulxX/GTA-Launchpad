@@ -9,6 +9,10 @@
   "cmake.configureArgs": [],
   "cmake.buildArgs": [],
 
+  // Don't auto-configure on open — dotnet must be installed first
+  "cmake.configureOnOpen": false,
+  "cmake.automaticReconfigure": false,
+
   // Show build output in the Problems panel
   "cmake.buildTask": true,
 

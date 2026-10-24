@@ -18,9 +18,21 @@ project(Launchpad NONE)
 set(CONFIG     "Release" CACHE STRING "Build configuration: Debug or Release")
 set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/publish" CACHE PATH "Publish output directory")
 
-# ── Require dotnet ───────────────────────────────────────────────────────────
-find_program(DOTNET_EXE dotnet REQUIRED
-    DOC "Path to the .NET 8 SDK CLI (https://dot.net)")
+# ── Find dotnet (soft — configure succeeds; build fails with instructions) ────
+find_program(DOTNET_EXE dotnet
+    HINTS "$ENV{HOME}/.dotnet" "$ENV{DOTNET_ROOT}"
+    DOC "Path to the .NET 8 SDK CLI")
+
+if(NOT DOTNET_EXE)
+    set(DOTNET_EXE "dotnet")   # let the shell resolve it at build time
+    message(WARNING
+        "dotnet SDK not found on PATH.\n"
+        "Install .NET 8 SDK from https://dot.net/download\n"
+        "  Arch/CachyOS:  sudo pacman -S dotnet-sdk-8.0\n"
+        "  Ubuntu/Debian: sudo apt install dotnet-sdk-8.0\n"
+        "  Script:        curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 8.0\n"
+        "The build will fail until dotnet is available.")
+endif()
 
 # ── Main build target ────────────────────────────────────────────────────────
 add_custom_target(Launchpad ALL
