@@ -386,9 +386,7 @@ public partial class MainForm : Form
 
         try
         {
-            CrashLog.Write($"InjectAsync start — mode={_settings.Mode} pid={_gtaPid}");
             var dlls = GetDllPaths();
-            CrashLog.Write($"DLL paths ({dlls.Count}): {string.Join(", ", dlls)}");
 
             // Re-download Stand DLL if it disappeared (Legacy)
             if (_settings.Mode == GameMode.Legacy &&
@@ -405,50 +403,40 @@ public partial class MainForm : Form
                 InfoText.Text = _settings.Mode == GameMode.Enhanced
                     ? "No DLLs selected. Open Advanced and add a DLL first."
                     : "Stand DLL not ready yet — wait for the update check.";
-                CrashLog.Write("No DLLs — returning early.");
                 return;
             }
 
             InfoText.Text = "Injecting...";
-            CrashLog.Write("Calling DllInjector.InjectAll via Task.Run...");
 
             int    pid      = _gtaPid;
             string tempDir  = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
             var    logLines = new System.Collections.Generic.List<string>();
 
             int injected = await Task.Run(() =>
-            {
-                CrashLog.Write($"  Task.Run thread started. pid={pid}");
-                int result = DllInjector.InjectAll(pid, dlls, tempDir,
-                    msg => { CrashLog.Write($"  [inj] {msg}"); lock (logLines) logLines.Add(msg); });
-                CrashLog.Write($"  Task.Run finished. injected={result}");
-                return result;
-            });
+                DllInjector.InjectAll(pid, dlls, tempDir,
+                    msg => { lock (logLines) logLines.Add(msg); }));
 
-            CrashLog.Write($"Returned from await. injected={injected} IsDisposed={IsDisposed}");
             if (IsDisposed) return;
 
             string logText = string.Join("\n", logLines);
 
             if (injected > 0)
             {
-                InfoText.Text  = $"Injected {injected}/{dlls.Count} DLL(s).";
-                _anyInjected   = true;
+                InfoText.Text = $"Injected {injected}/{dlls.Count} DLL(s).";
+                _anyInjected  = true;
             }
             else
             {
-                InfoText.Text  = "Injection failed — see details.";
+                InfoText.Text = "Injection failed — see details.";
                 string details = logText.Length > 0
                     ? logText
                     : "No DLL was injected. Ensure BattlEye is disabled and try running as Administrator.";
-                CrashLog.Write($"Showing failure dialog: {details}");
                 MessageBox.Show(details, "Stand Launchpad — Injection Failed",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         catch (Exception ex)
         {
-            CrashLog.Write($"Exception in InjectAsync: {ex}");
             if (!IsDisposed)
                 InfoText.Text = $"Inject error: {ex.Message}";
         }
