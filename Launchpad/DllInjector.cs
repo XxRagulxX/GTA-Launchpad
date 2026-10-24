@@ -37,14 +37,34 @@ internal static class DllInjector
         int injected = 0;
         try
         {
-            CrashLog.Write("  InjectAll: GetModuleHandle kernel32.dll");
-            var kernel32     = NativeMethods.GetModuleHandle("kernel32.dll");
-            CrashLog.Write($"  InjectAll: kernel32=0x{kernel32:X}");
-            var loadLibraryW = NativeMethods.GetProcAddress(kernel32, "LoadLibraryW");
-            CrashLog.Write($"  InjectAll: LoadLibraryW=0x{loadLibraryW:X}");
+            // Resolve LoadLibraryW in the TARGET process.
+            // Under Wine/Linux, kernel32.dll loads at different addresses per process,
+            // so we must look up the base from the target's module list, not our own.
+            CrashLog.Write("  InjectAll: resolving kernel32 base in target process");
+            var ourKernel32    = NativeMethods.GetModuleHandle("kernel32.dll");
+            var ourLLW         = NativeMethods.GetProcAddress(ourKernel32, "LoadLibraryW");
+            long llwOffset     = ourLLW.ToInt64() - ourKernel32.ToInt64();
+
+            var remoteKernel32 = NativeMethods.GetRemoteModuleBase((uint)pid, "kernel32.dll");
+            CrashLog.Write($"  InjectAll: ourKernel32=0x{ourKernel32:X} remoteKernel32=0x{remoteKernel32:X} llwOffset=0x{llwOffset:X}");
+
+            IntPtr loadLibraryW;
+            if (remoteKernel32 != IntPtr.Zero)
+            {
+                loadLibraryW = new IntPtr(remoteKernel32.ToInt64() + llwOffset);
+                CrashLog.Write($"  InjectAll: LoadLibraryW (remote) = 0x{loadLibraryW:X}");
+            }
+            else
+            {
+                // Toolhelp snapshot failed — fall back to our own address (may not work under Wine)
+                loadLibraryW = ourLLW;
+                CrashLog.Write($"  InjectAll: module snapshot failed, using our LoadLibraryW=0x{loadLibraryW:X}");
+                log("Warning: couldn't enumerate target modules; using fallback LoadLibraryW address.");
+            }
+
             if (loadLibraryW == IntPtr.Zero)
             {
-                log("Failed to resolve LoadLibraryW in kernel32.dll.");
+                log("Failed to resolve LoadLibraryW.");
                 return 0;
             }
 
