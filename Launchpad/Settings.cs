@@ -3,10 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace Launchpad;
 
-[JsonSerializable(typeof(LaunchpadSettings))]
-[JsonSourceGenerationOptions(WriteIndented = true)]
-internal partial class AppJsonContext : JsonSerializerContext { }
-
 internal enum GameMode
 {
     Legacy   = 0,
@@ -28,7 +24,7 @@ internal sealed class DllEntry
 
 internal sealed class LaunchpadSettings
 {
-    // Top-level mode selector
+    // Active game mode
     public GameMode Mode { get; set; } = GameMode.Legacy;
 
     // Shared settings
@@ -40,17 +36,18 @@ internal sealed class LaunchpadSettings
     public LauncherId LegacyGameLauncher   { get; set; } = LauncherId.Steam;
     public LauncherId EnhancedGameLauncher { get; set; } = LauncherId.Steam;
 
-    // Legacy: only user-added custom DLLs; the Stand DLL itself is auto-managed
+    // Legacy: user-added custom DLLs only (Stand DLL is auto-managed)
     public List<DllEntry> LegacyCustomDlls { get; set; } = new();
 
     // Enhanced: all user DLLs
     public List<DllEntry> EnhancedDlls { get; set; } = new();
 
-    // Migration: old single "Dlls" list (Enhanced branch) -> EnhancedDlls
+    // Migration: old single "Dlls" list from the previous Enhanced-only version
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<DllEntry>? Dlls { get; set; }
 
-    // Convenience: active launcher for the current mode
+    // ── Computed convenience properties (not serialized) ──────────────────────
+
     [JsonIgnore]
     public LauncherId GameLauncher
     {
@@ -58,17 +55,22 @@ internal sealed class LaunchpadSettings
         set { if (Mode == GameMode.Legacy) LegacyGameLauncher = value; else EnhancedGameLauncher = value; }
     }
 
-    // Convenience: active DLL list for the current mode
     [JsonIgnore]
     public List<DllEntry> ActiveDlls
         => Mode == GameMode.Legacy ? LegacyCustomDlls : EnhancedDlls;
 
-    // ── Persistence ──────────────────────────────────────────────────────────
+    // ── Persistence ───────────────────────────────────────────────────────────
 
     private static string SettingsPath =>
-        System.IO.Path.Combine(
+        Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Launchpad", "settings.json");
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented       = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
 
     public static LaunchpadSettings Load()
     {
@@ -76,15 +78,16 @@ internal sealed class LaunchpadSettings
         {
             if (File.Exists(SettingsPath))
             {
-                var text   = File.ReadAllText(SettingsPath);
-                var loaded = JsonSerializer.Deserialize(text, AppJsonContext.Default.LaunchpadSettings);
+                var loaded = JsonSerializer.Deserialize<LaunchpadSettings>(
+                    File.ReadAllText(SettingsPath), JsonOptions);
+
                 if (loaded != null)
                 {
-                    // Migrate old "Dlls" field -> EnhancedDlls
+                    // Migrate old single "Dlls" field → EnhancedDlls
                     if (loaded.Dlls is { Count: > 0 } && loaded.EnhancedDlls.Count == 0)
                     {
                         loaded.EnhancedDlls = loaded.Dlls;
-                        loaded.Dlls = null;
+                        loaded.Dlls         = null;
                     }
                     return loaded;
                 }
@@ -98,7 +101,7 @@ internal sealed class LaunchpadSettings
     {
         Dlls = null; // never write old field
         var path = SettingsPath;
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(this, AppJsonContext.Default.LaunchpadSettings));
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, JsonSerializer.Serialize(this, JsonOptions));
     }
 }

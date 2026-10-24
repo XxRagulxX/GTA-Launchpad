@@ -1,15 +1,14 @@
-using Avalonia;
+using System.Windows.Forms;
 
 namespace Launchpad;
 
-internal static class Program
+static class Program
 {
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
-
-    public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace();
+    static void Main()
+    {
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+        Application.Run(new MainForm());
+    }
 }

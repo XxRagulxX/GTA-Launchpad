@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RootNamespace>Launchpad</RootNamespace>
     <AssemblyName>Launchpad</AssemblyName>
@@ -10,33 +11,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>../icon.ico</ApplicationIcon>
 
-    <!-- Single self-contained exe -->
+    <!-- Single self-contained exe — no .NET install required on target machine -->
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <!-- Bundle native libs (SkiaSharp, HarfBuzz) — self-extract to %TEMP% at runtime -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <!-- Compress bundled assemblies (~40% size reduction) -->
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-
-    <!-- Size reduction -->
     <PublishReadyToRun>false</PublishReadyToRun>
-    <PublishTrimmed>true</PublishTrimmed>
-    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
 
-    <!-- No debug symbols -->
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-
-    <!-- Compiled bindings required for trim safety -->
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Avalonia"              Version="11.2.3" />
-    <PackageReference Include="Avalonia.Desktop"      Version="11.2.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
-    <!-- Avalonia.Fonts.Inter removed — uses system font (Segoe UI on Windows) -->
-    <PackageReference Include="Tmds.DBus.Protocol"   Version="0.21.3" />
-  </ItemGroup>
 
 </Project>
