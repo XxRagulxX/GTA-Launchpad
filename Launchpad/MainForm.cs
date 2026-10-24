@@ -408,20 +408,29 @@ public partial class MainForm : Form
 
             InfoText.Text = "Injecting...";
 
-            int pid      = _gtaPid; // capture before await
+            int    pid     = _gtaPid;
             string tempDir = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
+            var    logLines = new System.Collections.Generic.List<string>();
+
             int injected = await Task.Run(
-                () => DllInjector.InjectAll(pid, dlls, tempDir, Console.WriteLine));
+                () => DllInjector.InjectAll(pid, dlls, tempDir, msg => { lock (logLines) logLines.Add(msg); }));
 
             if (IsDisposed) return;
 
-            InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
+            string logText = string.Join("\n", logLines);
 
-            if (injected == 0 && !_anyInjected)
+            if (injected > 0)
             {
-                MessageBox.Show(
-                    "No DLL was injected.\n1. Ensure BattlEye is disabled.\n2. Try running the Launchpad as Administrator.",
-                    "Stand Launchpad", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                InfoText.Text = $"Injected {injected}/{dlls.Count} DLL(s).";
+            }
+            else
+            {
+                InfoText.Text = "Injection failed — see details.";
+                string details = logText.Length > 0
+                    ? logText
+                    : "No DLL was injected. Ensure BattlEye is disabled and try running as Administrator.";
+                MessageBox.Show(details, "Stand Launchpad — Injection Failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             if (injected > 0) _anyInjected = true;
