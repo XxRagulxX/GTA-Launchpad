@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    // C# language support + IntelliSense (includes OmniSharp / Roslyn)
+    "ms-dotnettools.csdevkit",
+    // C# extension (required by csdevkit)
+    "ms-dotnettools.csharp",
+    // CMake syntax highlighting and Tools integration
+    "ms-vscode.cmake-tools",
+    "twxs.cmake"
+  ]
+}

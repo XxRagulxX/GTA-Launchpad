@@ -1,0 +1,95 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ── CMake workflow ────────────────────────────────────────────────────────
+    {
+      "label": "CMake: Configure",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["-B", "${workspaceFolder}/build"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake: Build (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build"],
+      "dependsOn": "CMake: Configure",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "CMake: Build (Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B", "${workspaceFolder}/build",
+        "-DCONFIG=Debug",
+        "&&",
+        "cmake", "--build", "${workspaceFolder}/build"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "CMake: Clean",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build", "--target", "clean_publish"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── dotnet workflow (faster for quick iterations) ─────────────────────────
+    {
+      "label": "dotnet: Restore",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["restore", "Launchpad/Launchpad.csproj", "-r", "win-x64"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet: Build (Debug)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build", "Launchpad/Launchpad.csproj",
+        "-c", "Debug",
+        "-r", "win-x64"
+      ],
+      "dependsOn": "dotnet: Restore",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet: Publish (Release)",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "publish", "Launchpad/Launchpad.csproj",
+        "-c", "Release",
+        "-r", "win-x64",
+        "--self-contained", "true",
+        "-o", "${workspaceFolder}/build/publish"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

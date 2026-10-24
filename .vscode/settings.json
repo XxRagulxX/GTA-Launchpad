@@ -1,0 +1,34 @@
+{
+  // Point C# tooling at the single project
+  "dotnet.defaultSolution": "off",
+  "omnisharp.defaultLaunchSolution": "off",
+
+  // CMake Tools: point at the root CMakeLists.txt
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configureArgs": [],
+  "cmake.buildArgs": [],
+
+  // Show build output in the Problems panel
+  "cmake.buildTask": true,
+
+  // Editor: treat .axaml as XML (leftover extension, no Avalonia anymore)
+  "files.associations": {
+    "*.axaml": "xml",
+    "*.csproj": "xml"
+  },
+
+  // Exclude build artifacts from the file explorer
+  "files.exclude": {
+    "**/build/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "**/.git": true
+  },
+
+  // Format C# on save
+  "[csharp]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-dotnettools.csharp"
+  }
+}

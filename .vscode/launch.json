@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Run the published exe under Wine (Linux host).
+      // Requires: wine or wine64 installed, and a prior build.
+      "name": "Run via Wine (Linux)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "wine",
+      "runtimeArgs": [
+        "${workspaceFolder}/build/publish/Launchpad.exe"
+      ],
+      "preLaunchTask": "CMake: Build (Release)",
+      "console": "integratedTerminal"
+    },
+    {
+      // Debug on Windows: attach the C# debugger to the running process.
+      // Open this workspace on a Windows machine and use this configuration.
+      "name": "Debug on Windows (attach)",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "Launchpad"
+    },
+    {
+      // Launch directly on Windows with the .NET debugger.
+      // Only works when VSCode is running on a Windows machine.
+      "name": "Launch on Windows (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/publish/Launchpad.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "preLaunchTask": "dotnet: Build (Debug)"
+    }
+  ]
+}

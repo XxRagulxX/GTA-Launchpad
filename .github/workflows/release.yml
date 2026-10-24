@@ -26,10 +26,10 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "8.0.x"
 
       - name: Publish
-        run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 -o build/publish
+        run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 --self-contained true -o build/publish
 
       - name: Package
         run: Compress-Archive -Path build/publish/* -DestinationPath "Launchpad-${{ inputs.version }}-win-x64.zip"
