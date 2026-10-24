@@ -205,11 +205,10 @@ public partial class MainForm : Form
         DllList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
     }
 
-    private void AddBtn_Click(object? sender, EventArgs e)
-    {
-        if (CustomDllDialog.ShowDialog() == DialogResult.OK)
-            AddDll(CustomDllDialog.FileName);
-    }
+    private void AddBtn_Click(object? sender, EventArgs e) => CustomDllDialog.ShowDialog();
+
+    private void CustomDllDialog_FileOk(object? sender, System.ComponentModel.CancelEventArgs e)
+        => AddDll(CustomDllDialog.FileName);
 
     private void AddDll(string path)
     {
