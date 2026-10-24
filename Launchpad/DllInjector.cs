@@ -9,17 +9,21 @@ internal static class DllInjector
     {
         if (dllPaths.Count == 0) return 0;
 
+        CrashLog.Write($"  InjectAll: entered. pid={pid} dlls={dllPaths.Count} tempDir={tempDir}");
         Directory.CreateDirectory(tempDir);
+        CrashLog.Write($"  InjectAll: temp dir ready");
         foreach (var stale in new DirectoryInfo(tempDir).GetFiles())
         {
             try { stale.Delete(); } catch { }
         }
 
+        CrashLog.Write($"  InjectAll: calling OpenProcess on pid={pid}");
         var handle = NativeMethods.OpenProcess(
             NativeMethods.PROCESS_QUERY_INFORMATION | NativeMethods.PROCESS_CREATE_THREAD |
             NativeMethods.PROCESS_VM_OPERATION | NativeMethods.PROCESS_VM_WRITE |
             NativeMethods.PROCESS_VM_READ,
             false, (uint)pid);
+        CrashLog.Write($"  InjectAll: OpenProcess returned handle=0x{handle:X}");
 
         if (handle == IntPtr.Zero)
         {
