@@ -48,7 +48,7 @@ internal static class DllInjector
 
                 string copy = Path.Combine(tempDir, $"LP_{RandomSuffix(5)}.dll");
                 try { File.Copy(dll, copy, overwrite: true); }
-                catch (IOException) { log($"Couldn't stage '{dll}' — antivirus may be blocking it."); continue; }
+                catch (Exception) { log($"Couldn't stage '{dll}' — file may be locked or antivirus blocked it."); continue; }
 
                 var pathBytes = Encoding.Unicode.GetBytes(copy + "\0");
 

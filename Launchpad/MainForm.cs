@@ -353,55 +353,78 @@ public partial class MainForm : Form
 
     // ── Injection ─────────────────────────────────────────────────────────────
 
-    private void InjectBtn_Click(object? sender, EventArgs e) => _ = InjectAsync();
+    private bool _isInjecting;
+
+    private void InjectBtn_Click(object? sender, EventArgs e)
+    {
+        if (!_isInjecting) _ = InjectAsync();
+    }
 
     private async Task InjectAsync()
     {
-        if (_gtaPid == 0) return;
+        if (_gtaPid == 0 || _isInjecting) return;
 
+        _isInjecting = true;
         AutoInjectTimer.Stop();
         ProcessScanTimer.Stop();
         InjectBtn.Enabled = false;
 
-        var dlls = GetDllPaths();
-
-        // If the Stand DLL is missing, try re-downloading before injecting.
-        if (_settings.Mode == GameMode.Legacy &&
-            _standDllPath != null &&
-            dlls.Contains(_standDllPath) &&
-            !File.Exists(_standDllPath))
+        try
         {
-            InfoText.Text = "Stand DLL missing, re-downloading...";
-            await CheckStandDllAsync();
-        }
+            var dlls = GetDllPaths();
 
-        InfoText.Text = "Injecting...";
+            // Re-download Stand DLL if it disappeared (Legacy)
+            if (_settings.Mode == GameMode.Legacy &&
+                _standDllPath != null &&
+                dlls.Contains(_standDllPath) &&
+                !File.Exists(_standDllPath))
+            {
+                InfoText.Text = "Stand DLL missing, re-downloading...";
+                await CheckStandDllAsync();
+            }
 
-        string tempDir   = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
-        int    injected  = await Task.Run(
-            () => DllInjector.InjectAll(_gtaPid, dlls, tempDir, Console.WriteLine));
+            if (dlls.Count == 0)
+            {
+                InfoText.Text = _settings.Mode == GameMode.Enhanced
+                    ? "No DLLs selected. Open Advanced and add a DLL first."
+                    : "Stand DLL not ready yet — wait for the update check.";
+                return;
+            }
 
-        if (dlls.Count == 0)
-        {
-            InfoText.Text = _settings.Mode == GameMode.Enhanced
-                ? "No DLLs selected. Use Advanced to add a DLL first."
-                : "Stand DLL not ready yet — wait for the update check.";
-        }
-        else
-        {
+            InfoText.Text = "Injecting...";
+
+            int pid      = _gtaPid; // capture before await
+            string tempDir = Path.Combine(Path.GetTempPath(), "LaunchpadInjector");
+            int injected = await Task.Run(
+                () => DllInjector.InjectAll(pid, dlls, tempDir, Console.WriteLine));
+
+            if (IsDisposed) return;
+
             InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
+
             if (injected == 0 && !_anyInjected)
             {
                 MessageBox.Show(
-                    "No DLL was injected.\n1. Ensure that BattlEye is disabled.\n2. If it still doesn't work, try running the Launchpad as Administrator.",
+                    "No DLL was injected.\n1. Ensure BattlEye is disabled.\n2. Try running the Launchpad as Administrator.",
                     "Stand Launchpad", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+
+            if (injected > 0) _anyInjected = true;
         }
-
-        if (injected > 0) _anyInjected = true;
-
-        InjectBtn.Enabled = true;
-        ProcessScanTimer.Start();
+        catch (Exception ex)
+        {
+            if (!IsDisposed)
+                InfoText.Text = $"Inject error: {ex.Message}";
+        }
+        finally
+        {
+            _isInjecting = false;
+            if (!IsDisposed)
+            {
+                InjectBtn.Enabled = true;
+                ProcessScanTimer.Start();
+            }
+        }
     }
 
     private List<string> GetDllPaths()
