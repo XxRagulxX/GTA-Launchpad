@@ -37,8 +37,11 @@ internal static class DllInjector
         int injected = 0;
         try
         {
+            CrashLog.Write("  InjectAll: GetModuleHandle kernel32.dll");
             var kernel32     = NativeMethods.GetModuleHandle("kernel32.dll");
+            CrashLog.Write($"  InjectAll: kernel32=0x{kernel32:X}");
             var loadLibraryW = NativeMethods.GetProcAddress(kernel32, "LoadLibraryW");
+            CrashLog.Write($"  InjectAll: LoadLibraryW=0x{loadLibraryW:X}");
             if (loadLibraryW == IntPtr.Zero)
             {
                 log("Failed to resolve LoadLibraryW in kernel32.dll.");
@@ -54,16 +57,20 @@ internal static class DllInjector
                 }
 
                 string copy = Path.Combine(tempDir, $"LP_{RandomSuffix(5)}.dll");
+                CrashLog.Write($"  InjectAll: staging {Path.GetFileName(dll)} → {copy}");
                 try { File.Copy(dll, copy, overwrite: true); }
                 catch (Exception ex)
                 {
                     log($"Couldn't stage {Path.GetFileName(dll)}: {ex.Message}");
                     continue;
                 }
+                CrashLog.Write("  InjectAll: staged OK");
 
                 var pathBytes  = Encoding.Unicode.GetBytes(copy + "\0");
+                CrashLog.Write("  InjectAll: VirtualAllocEx");
                 var remoteAddr = NativeMethods.VirtualAllocEx(handle, IntPtr.Zero, (IntPtr)pathBytes.Length,
                     NativeMethods.MEM_COMMIT | NativeMethods.MEM_RESERVE, NativeMethods.PAGE_READWRITE);
+                CrashLog.Write($"  InjectAll: VirtualAllocEx returned 0x{remoteAddr:X}");
 
                 if (remoteAddr == IntPtr.Zero)
                 {
@@ -72,15 +79,19 @@ internal static class DllInjector
                     continue;
                 }
 
+                CrashLog.Write("  InjectAll: WriteProcessMemory");
                 if (!NativeMethods.WriteProcessMemory(handle, remoteAddr, pathBytes, (uint)pathBytes.Length, out _))
                 {
                     int err = Marshal.GetLastWin32Error();
                     log($"WriteProcessMemory failed for {Path.GetFileName(dll)} (error {err}).");
                     continue;
                 }
+                CrashLog.Write("  InjectAll: WriteProcessMemory OK");
 
+                CrashLog.Write("  InjectAll: CreateRemoteThread");
                 var thread = NativeMethods.CreateRemoteThread(
                     handle, IntPtr.Zero, 0, loadLibraryW, remoteAddr, 0, IntPtr.Zero);
+                CrashLog.Write($"  InjectAll: CreateRemoteThread returned 0x{thread:X}");
 
                 if (thread == IntPtr.Zero)
                 {
