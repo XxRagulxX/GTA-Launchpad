@@ -26,7 +26,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Publish
         run: dotnet publish Launchpad/Launchpad.csproj -c Release -r win-x64 --self-contained true -o build/publish

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(Launchpad NONE)
 
 # ---------------------------------------------------------------------------
-# CMake orchestrates the build; the .NET 8 SDK does the actual compilation.
+# CMake orchestrates the build; the .NET 10 SDK does the actual compilation.
 #
 #   cmake -B build
 #   cmake --build build
@@ -28,8 +28,8 @@ if(NOT DOTNET_EXE)
     message(WARNING
         "dotnet SDK not found on PATH.\n"
         "Install .NET 8 SDK from https://dot.net/download\n"
-        "  Arch/CachyOS:  sudo pacman -S dotnet-sdk-8.0\n"
-        "  Ubuntu/Debian: sudo apt install dotnet-sdk-8.0\n"
+        "  Arch/CachyOS:  sudo pacman -S dotnet-sdk-bin\n"
+        "  Ubuntu/Debian: sudo apt install dotnet-sdk-10.0\n"
         "  Script:        curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 8.0\n"
         "The build will fail until dotnet is available.")
 endif()
