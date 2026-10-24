@@ -42,6 +42,12 @@
     <Reference Include="System.Net.Http" />
     <!-- System.Text.Json is built into .NET 6+; pull it as NuGet for Framework. -->
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!--
+      Costura.Fody embeds all dependency DLLs as compressed resources inside the exe
+      at build time, so the output is a single portable Launchpad.exe with no loose DLLs.
+    -->
+    <PackageReference Include="Fody" Version="6.8.2" PrivateAssets="all" />
+    <PackageReference Include="Costura.Fody" Version="5.8.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
