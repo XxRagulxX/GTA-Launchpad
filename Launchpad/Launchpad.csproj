@@ -36,6 +36,13 @@
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
 
+  <!-- Embed the app icon so MainForm can set it as the title-bar icon at runtime. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../icon.ico">
+      <Link>icon.ico</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <!-- Extra references needed for .NET Framework 4.7.2 builds. -->
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
     <!-- System.Net.Http is a framework assembly; SDK-style projects don't auto-reference it. -->

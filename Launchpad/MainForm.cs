@@ -42,6 +42,12 @@ public partial class MainForm : Form
 
         InitializeComponent();
 
+        // Set the title-bar icon from the embedded resource
+        using var iconStream = typeof(MainForm).Assembly
+            .GetManifestResourceStream("Launchpad.icon.ico");
+        if (iconStream != null)
+            Icon = new System.Drawing.Icon(iconStream);
+
         // Launcher combobox — same options for both modes
         var launchers = new[]
         {
