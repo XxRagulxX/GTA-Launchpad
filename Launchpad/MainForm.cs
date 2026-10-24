@@ -279,8 +279,15 @@ public partial class MainForm : Form
 
     private void ProcessScanTimer_Tick(object? sender, EventArgs e)
     {
-        if (UpdateGtaPid())
-            ProcessGtaPidUpdate(_canAutoInject);
+        try
+        {
+            if (UpdateGtaPid())
+                ProcessGtaPidUpdate(_canAutoInject);
+        }
+        catch (Exception ex)
+        {
+            InfoText.Text = $"Scan error: {ex.Message}";
+        }
     }
 
     private bool UpdateGtaPid()
@@ -342,7 +349,7 @@ public partial class MainForm : Form
     private void AutoInjectTimer_Tick(object? sender, EventArgs e)
     {
         AutoInjectTimer.Stop();
-        _ = InjectAsync();
+        if (!_isInjecting) _ = InjectAsync();
     }
 
     private void GameClosedTimer_Tick(object? sender, EventArgs e)
