@@ -381,13 +381,21 @@ public partial class MainForm : Form
         int    injected  = await Task.Run(
             () => DllInjector.InjectAll(_gtaPid, dlls, tempDir, Console.WriteLine));
 
-        InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
-
-        if (injected == 0 && dlls.Count > 0 && !_anyInjected)
+        if (dlls.Count == 0)
         {
-            MessageBox.Show(
-                "No DLL was injected.\n1. Ensure that BattlEye is disabled.\n2. If it still doesn't work, try running the Launchpad as Administrator.",
-                "Stand Launchpad", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            InfoText.Text = _settings.Mode == GameMode.Enhanced
+                ? "No DLLs selected. Use Advanced to add a DLL first."
+                : "Stand DLL not ready yet — wait for the update check.";
+        }
+        else
+        {
+            InfoText.Text = $"Injected {injected}/{dlls.Count} DLLs.";
+            if (injected == 0 && !_anyInjected)
+            {
+                MessageBox.Show(
+                    "No DLL was injected.\n1. Ensure that BattlEye is disabled.\n2. If it still doesn't work, try running the Launchpad as Administrator.",
+                    "Stand Launchpad", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         if (injected > 0) _anyInjected = true;
@@ -398,21 +406,21 @@ public partial class MainForm : Form
 
     private List<string> GetDllPaths()
     {
-        if (_settings.Advanced)
+        // Legacy simple mode: inject only the auto-managed Stand DLL
+        if (_settings.Mode == GameMode.Legacy && !_settings.Advanced)
         {
-            return DllList.Items
-                .Cast<ListViewItem>()
-                .Where(i => i.Checked)
-                .Select(i => i.Tag as string ?? i.Text)
-                .Where(p => p.Length > 0)
-                .ToList();
+            if (_standDllPath != null)
+                return new List<string> { _standDllPath };
+            return new List<string>();
         }
 
-        // Simple mode: only the Stand DLL (Legacy) or nothing (Enhanced — user picks in advanced)
-        if (_settings.Mode == GameMode.Legacy && _standDllPath != null)
-            return new List<string> { _standDllPath };
-
-        return new List<string>();
+        // Enhanced (any mode) + Legacy advanced: inject all checked DLLs from the list
+        return DllList.Items
+            .Cast<ListViewItem>()
+            .Where(i => i.Checked)
+            .Select(i => i.Tag as string ?? i.Text)
+            .Where(p => p.Length > 0)
+            .ToList();
     }
 
     // ── Launch game ───────────────────────────────────────────────────────────
