@@ -44,7 +44,9 @@ internal sealed class StandUpdater
         string versionsText;
         try
         {
-            versionsText = await Http.GetStringAsync("https://stand.sh/versions.txt", ct);
+            using var resp = await Http.GetAsync("https://stand.sh/versions.txt", ct);
+            resp.EnsureSuccessStatusCode();
+            versionsText = await resp.Content.ReadAsStringAsync();
         }
         catch
         {
@@ -97,15 +99,15 @@ internal sealed class StandUpdater
             response.EnsureSuccessStatusCode();
 
             long? total = response.Content.Headers.ContentLength;
-            await using var src  = await response.Content.ReadAsStreamAsync(ct);
-            await using var dest = File.Create(tmpPath);
+            using var src  = await response.Content.ReadAsStreamAsync();
+            using var dest = File.Create(tmpPath);
 
             var buf        = new byte[16384];
             long downloaded = 0;
             int  read;
-            while ((read = await src.ReadAsync(buf, ct)) > 0)
+            while ((read = await src.ReadAsync(buf, 0, buf.Length, ct)) > 0)
             {
-                await dest.WriteAsync(buf.AsMemory(0, read), ct);
+                await dest.WriteAsync(buf, 0, read, ct);
                 downloaded += read;
                 if (total > 0)
                     progress?.Report((int)(downloaded * 100 / total.Value));
@@ -125,7 +127,8 @@ internal sealed class StandUpdater
                    "Your antivirus may be interfering — add an exclusion and try again.";
         }
 
-        File.Move(tmpPath, destPath, overwrite: true);
+        if (File.Exists(destPath)) File.Delete(destPath);
+        File.Move(tmpPath, destPath);
         return null;
     }
 
@@ -138,7 +141,7 @@ internal sealed class StandUpdater
            f.Name.EndsWith(".dll",    StringComparison.OrdinalIgnoreCase);
 
     private static string GetVersionFromDll(FileInfo f)
-        => f.Name[6..^4]; // "Stand X.Y.Z.dll" → "X.Y.Z"
+        => f.Name.Substring(6, f.Name.Length - 10); // "Stand X.Y.Z.dll" → "X.Y.Z"
 
     /// <summary>Open the Stand data folder in Explorer.</summary>
     public void OpenStandFolder()

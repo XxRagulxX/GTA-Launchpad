@@ -26,7 +26,6 @@ public partial class MainForm : Form
     private int    _gtaPid;
     private bool   _gameWasOpen;
     private bool   _canAutoInject  = true;
-    private bool   _anyInjected;
 
     // Resolved Stand DLL path (Legacy mode only; null until updater finishes)
     private string? _standDllPath;
@@ -97,7 +96,7 @@ public partial class MainForm : Form
         _settings.Mode   = newMode;
         _gtaPid          = 0;
         _canAutoInject   = true;
-        _anyInjected     = false;
+
 
         AutoInjectTimer.Stop();
         ToggleInjectOrLaunch(false);
@@ -423,7 +422,6 @@ public partial class MainForm : Form
             if (injected > 0)
             {
                 InfoText.Text = $"Injected {injected}/{dlls.Count} DLL(s).";
-                _anyInjected  = true;
             }
             else
             {
