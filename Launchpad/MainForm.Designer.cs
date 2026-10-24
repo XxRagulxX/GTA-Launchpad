@@ -66,7 +66,7 @@ partial class MainForm
         GameClosedTimer.Tick      += GameClosedTimer_Tick;
 
         // ── File dialog ───────────────────────────────────────────────────────
-        CustomDllDialog         = new OpenFileDialog { Filter = "DLL files|*.dll|All files|*.*" };
+        CustomDllDialog         = new OpenFileDialog { Filter = "DLL files|*.dll|All files|*.*", Multiselect = true };
         CustomDllDialog.FileOk += CustomDllDialog_FileOk;
 
         // ── Mode radio buttons (y=12) ─────────────────────────────────────────

@@ -210,10 +210,19 @@ public partial class MainForm : Form
         ResizeDllColumn();
     }
 
-    private void AddBtn_Click(object? sender, EventArgs e) => CustomDllDialog.ShowDialog();
+    private void AddBtn_Click(object? sender, EventArgs e)
+    {
+        if (!string.IsNullOrEmpty(_settings.LastDllDirectory) &&
+            Directory.Exists(_settings.LastDllDirectory))
+            CustomDllDialog.InitialDirectory = _settings.LastDllDirectory;
+        CustomDllDialog.ShowDialog();
+    }
 
     private void CustomDllDialog_FileOk(object? sender, System.ComponentModel.CancelEventArgs e)
-        => AddDll(CustomDllDialog.FileName);
+    {
+        foreach (var file in CustomDllDialog.FileNames)
+            AddDll(file);
+    }
 
     private void AddDll(string path)
     {
@@ -223,6 +232,7 @@ public partial class MainForm : Form
             Tag     = path,
         });
         ResizeDllColumn();
+        _settings.LastDllDirectory = Path.GetDirectoryName(path);
         SaveSettings();
     }
 

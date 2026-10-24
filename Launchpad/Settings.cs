@@ -25,6 +25,10 @@ internal sealed class LaunchpadSettings
     [DataMember] public List<DllEntry> LegacyCustomDlls   { get; set; } = new();
     [DataMember] public List<DllEntry> EnhancedDlls       { get; set; } = new();
 
+    // Last folder the user picked a DLL from — file dialog re-opens here.
+    [DataMember(EmitDefaultValue = false)]
+    public string? LastDllDirectory { get; set; }
+
     // Written only when non-null so old migration data is not persisted back.
     [DataMember(EmitDefaultValue = false)]
     public List<DllEntry>? Dlls { get; set; }
