@@ -6,8 +6,9 @@
         SizeToContent="WidthAndHeight"
         CanResize="False">
     <!--
-        Two-column layout matching original Stand Launchpad 1.9.3 (senpai branch):
-          Left col (270 px fixed) : always visible — launch/inject, checkbox, folder, advanced, status
+        Unified launcher — supports GTA V Legacy and GTA V Enhanced in one window.
+        Layout mirrors the original Stand Launchpad 1.9.3 (senpai branch):
+          Left col (270 px fixed) : always visible — mode toggle, launch/inject, checkbox, folder, advanced, status
           Right col (Auto)        : AdvancedPanel — delay row + DLL list (hidden until Advanced clicked)
     -->
     <Grid>
@@ -18,6 +19,19 @@
 
         <!-- ── Left column ─────────────────────────────────────────────── -->
         <StackPanel Grid.Column="0" Margin="12" Spacing="6">
+
+            <!-- Row 0: Game mode toggle -->
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <RadioButton x:Name="LegacyModeBtn"
+                             Content="GTA V Legacy"
+                             GroupName="GameMode"
+                             IsChecked="True"
+                             Checked="ModeBtn_Checked" />
+                <RadioButton x:Name="EnhancedModeBtn"
+                             Content="GTA V Enhanced"
+                             GroupName="GameMode"
+                             Checked="ModeBtn_Checked" />
+            </StackPanel>
 
             <!-- Row 1: InjectBtn (game running) OR LaunchBtn + ComboBox -->
             <Grid>
@@ -46,11 +60,12 @@
                       Checked="AutoInjectCheckBox_Changed"
                       Unchecked="AutoInjectCheckBox_Changed" />
 
-            <!-- Row 3: Open Stand Folder -->
-            <Button Content="Open Stand Folder"
+            <!-- Row 3: Open Stand/Game Folder -->
+            <Button x:Name="OpenFolderBtn"
+                    Content="Open Stand Folder"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
-                    Click="OpenStandFolderBtn_Click" />
+                    Click="OpenFolderBtn_Click" />
 
             <!-- Row 4: Advanced toggle -->
             <Button x:Name="AdvancedBtn" Content="Advanced"
@@ -58,10 +73,23 @@
                     HorizontalContentAlignment="Left"
                     Click="AdvancedBtn_Click" />
 
-            <!-- Row 5: Status -->
+            <!-- Row 5: Check for Updates (Legacy mode only) -->
+            <Button x:Name="CheckUpdateBtn"
+                    Content="Check for Updates"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    IsVisible="True"
+                    Click="CheckUpdateBtn_Click" />
+
+            <!-- Row 6: Status + download progress -->
             <TextBlock x:Name="InfoText"
-                       Text="Ready to inject; just start the game."
+                       Text="Checking for updates..."
                        TextWrapping="Wrap" />
+
+            <ProgressBar x:Name="DownloadProgress"
+                         Minimum="0" Maximum="100"
+                         IsVisible="False"
+                         Height="6" />
 
         </StackPanel>
 
@@ -69,7 +97,7 @@
         <StackPanel x:Name="AdvancedPanel" Grid.Column="1"
                     Margin="0,12,12,12" Spacing="6" IsVisible="False">
 
-            <!-- Delay label + NUD + ↑↓ (control delay) + Add + Remove -->
+            <!-- Delay label + NUD + ↑↓ + Add + Remove -->
             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="Automatic Injection Delay (Seconds):"
                            VerticalAlignment="Center" />

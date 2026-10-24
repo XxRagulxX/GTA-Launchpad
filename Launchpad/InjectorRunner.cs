@@ -2,14 +2,23 @@ namespace Launchpad;
 
 /// <summary>
 /// Bridges the UI to the injection and game-watch logic.
-/// Everything runs in-process — no child exe, no stdout parsing.
+/// Supports both Legacy (GTA5.exe) and Enhanced (GTA5_Enhanced.exe) modes.
 /// </summary>
 internal sealed class InjectorRunner
 {
     public event Action<int>? GameStarted;
-    public event Action? GameStopped;
+    public event Action?      GameStopped;
 
-    private CancellationTokenSource? _watchCts;
+    private GameMode                  _mode;
+    private CancellationTokenSource?  _watchCts;
+
+    public InjectorRunner(GameMode mode)
+    {
+        _mode = mode;
+    }
+
+    /// <summary>Switch the watched process without restarting the watcher loop.</summary>
+    public void SetMode(GameMode mode) => _mode = mode;
 
     public void StartWatching()
     {
@@ -21,14 +30,14 @@ internal sealed class InjectorRunner
             int lastPid = 0;
             while (!token.IsCancellationRequested)
             {
-                int pid = GameProcess.FindPid();
+                int pid = GameProcess.FindPid(_mode);
                 if (pid != lastPid)
                 {
                     if (pid != 0) GameStarted?.Invoke(pid);
                     else          GameStopped?.Invoke();
                     lastPid = pid;
                 }
-                try { await Task.Delay(1000, token); }
+                try   { await Task.Delay(1000, token); }
                 catch (OperationCanceledException) { break; }
             }
         }, token);
@@ -46,11 +55,11 @@ internal sealed class InjectorRunner
         return await Task.Run(() => DllInjector.InjectAll(pid, dllPaths, tempDir, log));
     }
 
-    public async Task<string?> LaunchAsync(LauncherId launcher)
+    public async Task<string?> LaunchAsync(GameMode mode, LauncherId launcher)
     {
         return await Task.Run(() =>
         {
-            StorefrontLauncher.TryLaunch(launcher, out var error);
+            StorefrontLauncher.TryLaunch(mode, launcher, out var error);
             return error;
         });
     }
