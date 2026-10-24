@@ -111,7 +111,7 @@ partial class MainForm
         {
             Text      = "Launch",
             Location  = new Point(12, 38),
-            Size      = new Size(50, 23),
+            Size      = new Size(62, 23),
             FlatStyle = FlatStyle.Flat,
             BackColor = ButtonBgColor,
             ForeColor = Color.White,
@@ -121,8 +121,8 @@ partial class MainForm
 
         LauncherType = new ComboBox
         {
-            Location         = new Point(66, 38),
-            Size             = new Size(194, 23),
+            Location         = new Point(78, 38),
+            Size             = new Size(182, 23),
             DropDownStyle    = ComboBoxStyle.DropDownList,
             BackColor        = ButtonBgColor,
             ForeColor        = Color.White,
