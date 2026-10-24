@@ -158,7 +158,7 @@ public partial class MainForm : Form
             {
                 DllList.Items[0].Text = $"Stand {_updater.StandVersion}";
                 DllList.Items[0].Tag  = _standDllPath;
-                DllList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                ResizeDllColumn();
             }
 
             InfoText.Text = _gtaPid != 0 ? "Ready to inject." : "Ready to inject; just start the game.";
@@ -195,14 +195,14 @@ public partial class MainForm : Form
 
         foreach (var entry in _settings.ActiveDlls)
         {
-            DllList.Items.Add(new ListViewItem(entry.Path)
+            DllList.Items.Add(new ListViewItem(Path.GetFileName(entry.Path))
             {
                 Checked = entry.Checked,
                 Tag     = entry.Path,
             });
         }
 
-        DllList.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+        ResizeDllColumn();
     }
 
     private void AddBtn_Click(object? sender, EventArgs e) => CustomDllDialog.ShowDialog();
@@ -212,12 +212,20 @@ public partial class MainForm : Form
 
     private void AddDll(string path)
     {
-        DllList.Items.Add(new ListViewItem(path)
+        DllList.Items.Add(new ListViewItem(Path.GetFileName(path))
         {
             Checked = true,
             Tag     = path,
         });
+        ResizeDllColumn();
         SaveSettings();
+    }
+
+    private void ResizeDllColumn()
+    {
+        if (DllList.Columns.Count == 0) return;
+        // Fill the full list width, leaving room for the scrollbar
+        DllList.Columns[0].Width = DllList.ClientSize.Width;
     }
 
     private void RemoveBtn_Click(object? sender, EventArgs e) => RemoveSelectedDlls();
