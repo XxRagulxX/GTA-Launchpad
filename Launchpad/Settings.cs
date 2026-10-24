@@ -16,7 +16,8 @@ internal sealed class DllEntry
 [DataContract]
 internal sealed class LaunchpadSettings
 {
-    [DataMember] public GameMode   Mode                   { get; set; } = GameMode.Legacy;
+    // Not persisted — always opens in Legacy mode.
+    public GameMode Mode { get; set; } = GameMode.Legacy;
     [DataMember] public bool       AutoInject             { get; set; }
     [DataMember] public int        AutoInjectDelaySeconds { get; set; }
     [DataMember] public bool       Advanced               { get; set; }
